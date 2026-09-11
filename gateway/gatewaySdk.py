@@ -191,6 +191,52 @@ class gatewaySdk:
         except Exception as e:
             return {"code": 0, "message": e}
 
+    @staticmethod
+    def getPayinPaymentCodes() -> dict:
+        """Get active pay-in payment codes available to the merchant."""
+        return gatewaySdk.__getPaymentCodes("getPayinPaymentCodes")
+
+    @staticmethod
+    def getPayoutPaymentCodes() -> dict:
+        """Get active payout payment codes available to the merchant."""
+        return gatewaySdk.__getPaymentCodes("getPayoutPaymentCodes")
+
+    @staticmethod
+    def __getPaymentCodes(endpoint) -> dict:
+        try:
+            token = gatewaySdk.__getToken()
+            if gatewaySdk.__isnull(token):
+                return {"code": 0, "message": "token is null", "data": []}
+            requestUrl = "gateway/" + gatewayCfg.VERSION_NO + "/" + endpoint
+            cnst = gatewaySdk.__generateConstant(requestUrl)
+            bodyJson = "{}"
+            base64ReqBody = gatewaySdk.__sortedAfterToBased64(bodyJson)
+            signature = gatewaySdk.__createSignature(cnst, base64ReqBody)
+            encryptData = gatewaySdk.__symEncrypt(base64ReqBody)
+            response = gatewaySdk.__post(
+                requestUrl,
+                token,
+                signature,
+                {"data": encryptData},
+                cnst["nonceStr"],
+                cnst["timestamp"]
+            )
+            if str(response.get("code", "0")) != "1" or gatewaySdk.__isnull(response.get("encryptedData")):
+                return {
+                    "code": 0,
+                    "message": response.get("message", "Payment code request failed"),
+                    "data": []
+                }
+            decryptedData = gatewaySdk.symDecrypt(response["encryptedData"])
+            result = gatewaySdk.__tryParseJson(decryptedData)
+            return result if isinstance(result, dict) else {
+                "code": 0,
+                "message": "Invalid payment code response",
+                "data": []
+            }
+        except Exception as e:
+            return {"code": 0, "message": e, "data": []}
+
     # **
     # * get server token
     # * @returns token

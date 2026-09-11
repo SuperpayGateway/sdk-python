@@ -37,6 +37,13 @@ print(detailResult)
 balanceResult = gatewaySdk.balance()
 print(balanceResult)
 
+# Get active pay-in and payout codes configured for this merchant
+payinPaymentCodes = gatewaySdk.getPayinPaymentCodes()
+print(payinPaymentCodes)
+
+payoutPaymentCodes = gatewaySdk.getPayoutPaymentCodes()
+print(payoutPaymentCodes)
+
 # Decrypt the encrypted information in the callback
 jsonstr = gatewaySdk.symDecrypt("encryptedData .........")
 print(jsonstr)
